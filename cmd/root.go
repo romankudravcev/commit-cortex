@@ -1,6 +1,3 @@
-/*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
@@ -13,8 +10,6 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var (
-	cfgFile string
-
 	rootCmd = &cobra.Command{
 		Use:   "commit-cortex",
 		Short: "A brief description of your application",
@@ -41,30 +36,36 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.commit-cortex.yaml)")
 }
 
 func initConfig() {
-	if cfgFile != "" {
-		viper.SetConfigFile(cfgFile)
-	} else {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			err = fmt.Errorf("error getting home dir: %v", err)
-			cobra.CheckErr(err)
-		}
 
-		viper.AddConfigPath(home)
-		viper.SetConfigType("json")
-		viper.SetConfigName(".commit-cortex")
-		err = viper.SafeWriteConfig()
-		if err != nil {
-			err = fmt.Errorf("failed to write: %v", err)
-			cobra.CheckErr(err)
+	home, err := os.UserHomeDir()
+	if err != nil {
+		err = fmt.Errorf("error getting home dir: %v", err)
+		cobra.CheckErr(err)
+	}
+
+	viper.AddConfigPath(home)
+	fileType := "json"
+	fileName := ".commit-cortex"
+	viper.SetConfigType(fileType)
+	viper.SetConfigName(fileName)
+
+	configPath := home + string(os.PathSeparator) + fileName + "." + fileType
+
+	if _, err := os.Stat(configPath); err != nil {
+		if os.IsNotExist(err) {
+			err = viper.SafeWriteConfig()
+			if err != nil {
+				err = fmt.Errorf("failed to write: %v", err)
+				cobra.CheckErr(err)
+			}
 		}
 	}
 
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
+	if err := viper.ReadInConfig(); err != nil {
+		err = fmt.Errorf("error reading config file: %v", err)
+		cobra.CheckErr(err)
 	}
 }
