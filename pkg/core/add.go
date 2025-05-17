@@ -3,8 +3,8 @@ package core
 import (
 	"fmt"
 	. "github.com/romankudravcev/commit-cortex/internal/components"
+	"github.com/romankudravcev/commit-cortex/internal/os"
 	"github.com/spf13/viper"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -25,7 +25,11 @@ func Add(path string) error {
 		return fmt.Errorf("error unmarshalling repos: %v", err)
 	}
 
-	if err := isExisting(path, gitPath); err != nil {
+	if err := os.PathExists(path); err != nil {
+		return err
+	}
+
+	if err := os.PathExists(gitPath); err != nil {
 		return err
 	}
 
@@ -33,6 +37,7 @@ func Add(path string) error {
 		return err
 	}
 
+	//TODO handle error correctly
 	remoteUrl, _ := getRemoteUrl(path)
 
 	newRepo := Repo{
@@ -55,21 +60,6 @@ func addRepo(newRepo Repo, repos []Repo) error {
 	err := viper.WriteConfig()
 	if err != nil {
 		return fmt.Errorf("error writing config: %v", err)
-	}
-	return nil
-}
-
-func isExisting(path string, gitPath string) error {
-	if _, err := os.Stat(path); err != nil {
-		if os.IsNotExist(err) {
-			return fmt.Errorf("path does not exist")
-		}
-	}
-
-	if _, err := os.Stat(gitPath); err != nil {
-		if os.IsNotExist(err) {
-			return fmt.Errorf("path is not a git repository")
-		}
 	}
 	return nil
 }

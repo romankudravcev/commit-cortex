@@ -5,7 +5,7 @@ import (
 	. "github.com/romankudravcev/commit-cortex/internal/components"
 	"github.com/romankudravcev/commit-cortex/internal/output"
 	"github.com/spf13/viper"
-	"os"
+	"slices"
 )
 
 func List() error {
@@ -23,15 +23,15 @@ func List() error {
 		return nil
 	}
 
-	var notFoundRepositories []Repo
+	notAvailableRepositories, err := GetUnavailableRepositories(repos)
+	if err != nil {
+		return fmt.Errorf("error getting unavailable repositories: %v", err)
+	}
 
 	fmt.Println(output.Color("Tracked repositories:", output.Green, output.Bold))
 	for _, repo := range repos {
-		if _, err := os.Stat(repo.Path); err != nil {
-			if os.IsNotExist(err) {
-				notFoundRepositories = append(notFoundRepositories, repo)
-				continue
-			}
+		if slices.Contains(notAvailableRepositories, repo) {
+			continue
 		}
 
 		prefix := output.Color(fmt.Sprintf("[%s]: ", output.Link(repo.Name, repo.RemoteUrl)), output.Blue, output.Bold)
@@ -39,11 +39,11 @@ func List() error {
 		fmt.Printf(prefix + path + "\n")
 	}
 
-	if len(notFoundRepositories) > 0 {
+	if len(notAvailableRepositories) > 0 {
 		fmt.Println()
 		fmt.Println(output.Color("Not found repositories: (remove with `cc tidy` if not needed anymore)", output.Red, output.Bold))
 
-		for _, repo := range notFoundRepositories {
+		for _, repo := range notAvailableRepositories {
 			prefix := output.Color(fmt.Sprintf("[%s]: ", output.Link(repo.Name, repo.RemoteUrl)), output.Blue, output.Bold)
 			path := output.Color(repo.Path, output.Cyan)
 			fmt.Printf(prefix + path + "\n")
