@@ -2,20 +2,17 @@ package core
 
 import (
 	"fmt"
+	. "github.com/romankudravcev/commit-cortex/internal/components"
 	"github.com/spf13/viper"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 )
-
-type Repo struct {
-	Path string
-	Name string
-}
 
 func Add(path string) error {
 	path, err := filepath.Abs(path)
 	gitPath := fmt.Sprintf("%s/.git", path)
-
 	if err != nil {
 		return fmt.Errorf("error getting absolute path: %v", err)
 	}
@@ -36,9 +33,12 @@ func Add(path string) error {
 		return err
 	}
 
+	remoteUrl, _ := getRemoteUrl(path)
+
 	newRepo := Repo{
-		Path: gitPath,
-		Name: getRepoName(path),
+		Path:      gitPath,
+		Name:      getRepoName(path),
+		RemoteUrl: remoteUrl,
 	}
 
 	if err := addRepo(newRepo, repos); err != nil {
@@ -85,4 +85,21 @@ func isAdded(repos []Repo, gitPath string) error {
 
 func getRepoName(path string) string {
 	return filepath.Base(path)
+}
+
+func getRemoteUrl(path string) (string, error) {
+	//TODO: Refactor, maybe read the git config file instead of spawning bash
+	cmd := fmt.Sprintf("git -C %s remote get-url origin", path)
+	out, err := exec.Command("bash", "-c", cmd).Output()
+
+	url := string(out)
+
+	url = strings.Replace(url, "git@github.com:", "https://github.com/", 1)
+	url = strings.TrimSuffix(url, ".git\n")
+
+	if err != nil {
+		return "", fmt.Errorf("error getting remote url: %v", err)
+	}
+
+	return url, nil
 }
