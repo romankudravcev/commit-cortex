@@ -39,13 +39,15 @@ func List() error {
 		fmt.Printf(prefix + path + "\n")
 	}
 
-	fmt.Println()
-	fmt.Println(output.Color("Not found repositories:", output.Red, output.Bold))
+	if len(notFoundRepositories) > 0 {
+		fmt.Println()
+		fmt.Println(output.Color("Not found repositories: (remove with `cc tidy` if not needed anymore)", output.Red, output.Bold))
 
-	for _, repo := range notFoundRepositories {
-		prefix := output.Color(fmt.Sprintf("[%s]: ", output.Link(repo.Name, repo.RemoteUrl)), output.Blue, output.Bold)
-		path := output.Color(repo.Path, output.Cyan)
-		fmt.Printf(prefix + path + "\n")
+		for _, repo := range notFoundRepositories {
+			prefix := output.Color(fmt.Sprintf("[%s]: ", output.Link(repo.Name, repo.RemoteUrl)), output.Blue, output.Bold)
+			path := output.Color(repo.Path, output.Cyan)
+			fmt.Printf(prefix + path + "\n")
+		}
 	}
 
 	return nil
