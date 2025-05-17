@@ -5,6 +5,7 @@ import (
 	. "github.com/romankudravcev/commit-cortex/internal/components"
 	"github.com/romankudravcev/commit-cortex/internal/output"
 	"github.com/spf13/viper"
+	"os"
 )
 
 func List() error {
@@ -22,8 +23,26 @@ func List() error {
 		return nil
 	}
 
+	var notFoundRepositories []Repo
+
 	fmt.Println(output.Color("Tracked repositories:", output.Green, output.Bold))
 	for _, repo := range repos {
+		if _, err := os.Stat(repo.Path); err != nil {
+			if os.IsNotExist(err) {
+				notFoundRepositories = append(notFoundRepositories, repo)
+				continue
+			}
+		}
+
+		prefix := output.Color(fmt.Sprintf("[%s]: ", output.Link(repo.Name, repo.RemoteUrl)), output.Blue, output.Bold)
+		path := output.Color(repo.Path, output.Cyan)
+		fmt.Printf(prefix + path + "\n")
+	}
+
+	fmt.Println()
+	fmt.Println(output.Color("Not found repositories:", output.Red, output.Bold))
+
+	for _, repo := range notFoundRepositories {
 		prefix := output.Color(fmt.Sprintf("[%s]: ", output.Link(repo.Name, repo.RemoteUrl)), output.Blue, output.Bold)
 		path := output.Color(repo.Path, output.Cyan)
 		fmt.Printf(prefix + path + "\n")
