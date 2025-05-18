@@ -2,12 +2,13 @@ package core
 
 import (
 	"fmt"
-	. "github.com/romankudravcev/commit-cortex/internal/components"
-	"github.com/romankudravcev/commit-cortex/internal/os"
-	"github.com/spf13/viper"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/romankudravcev/commit-cortex/internal/components"
+	"github.com/romankudravcev/commit-cortex/internal/os"
+	"github.com/spf13/viper"
 )
 
 func Add(path string) error {
@@ -17,9 +18,9 @@ func Add(path string) error {
 		return fmt.Errorf("error getting absolute path: %v", err)
 	}
 
-	viper.SetDefault("repos", []Repo{})
+	viper.SetDefault("repos", []components.Repo{})
 
-	var repos []Repo
+	var repos []components.Repo
 	err = viper.UnmarshalKey("repos", &repos)
 	if err != nil {
 		return fmt.Errorf("error unmarshalling repos: %v", err)
@@ -37,10 +38,10 @@ func Add(path string) error {
 		return err
 	}
 
-	//TODO handle error correctly
+	// TODO handle error correctly
 	remoteUrl, _ := getRemoteUrl(path)
 
-	newRepo := Repo{
+	newRepo := components.Repo{
 		Path:      gitPath,
 		Name:      getRepoName(path),
 		RemoteUrl: remoteUrl,
@@ -53,7 +54,7 @@ func Add(path string) error {
 	return nil
 }
 
-func addRepo(newRepo Repo, repos []Repo) error {
+func addRepo(newRepo components.Repo, repos []components.Repo) error {
 	repos = append(repos, newRepo)
 
 	viper.Set("repos", repos)
@@ -64,7 +65,7 @@ func addRepo(newRepo Repo, repos []Repo) error {
 	return nil
 }
 
-func isAdded(repos []Repo, gitPath string) error {
+func isAdded(repos []components.Repo, gitPath string) error {
 	for _, repo := range repos {
 		if repo.Path == gitPath {
 			return fmt.Errorf("repo already added")
@@ -78,7 +79,7 @@ func getRepoName(path string) string {
 }
 
 func getRemoteUrl(path string) (string, error) {
-	//TODO: Refactor, maybe read the git config file instead of spawning bash
+	// TODO: Refactor, maybe read the git config file instead of spawning bash
 	cmd := fmt.Sprintf("git -C %s remote get-url origin", path)
 	out, err := exec.Command("bash", "-c", cmd).Output()
 

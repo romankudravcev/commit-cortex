@@ -2,16 +2,17 @@ package core
 
 import (
 	"fmt"
-	. "github.com/romankudravcev/commit-cortex/internal/components"
+	"slices"
+
+	"github.com/romankudravcev/commit-cortex/internal/components"
 	"github.com/romankudravcev/commit-cortex/internal/output"
 	"github.com/spf13/viper"
-	"slices"
 )
 
 func List() error {
-	viper.SetDefault("repos", []Repo{})
+	viper.SetDefault("repos", []components.Repo{})
 
-	var repos []Repo
+	var repos []components.Repo
 	err := viper.UnmarshalKey("repos", &repos)
 	if err != nil {
 		return fmt.Errorf("error unmarshalling repos: %v", err)
@@ -23,7 +24,7 @@ func List() error {
 		return nil
 	}
 
-	notAvailableRepositories, err := GetUnavailableRepositories(repos)
+	notAvailableRepositories, err := components.GetUnavailableRepositories(repos)
 	if err != nil {
 		return fmt.Errorf("error getting unavailable repositories: %v", err)
 	}
@@ -36,7 +37,7 @@ func List() error {
 
 		prefix := output.Color(fmt.Sprintf("[%s]: ", output.Link(repo.Name, repo.RemoteUrl)), output.Blue, output.Bold)
 		path := output.Color(repo.Path, output.Cyan)
-		fmt.Printf(prefix + path + "\n")
+		fmt.Println(prefix + path)
 	}
 
 	if len(notAvailableRepositories) > 0 {
@@ -46,7 +47,7 @@ func List() error {
 		for _, repo := range notAvailableRepositories {
 			prefix := output.Color(fmt.Sprintf("[%s]: ", output.Link(repo.Name, repo.RemoteUrl)), output.Blue, output.Bold)
 			path := output.Color(repo.Path, output.Cyan)
-			fmt.Printf(prefix + path + "\n")
+			fmt.Println(prefix + path)
 		}
 	}
 
